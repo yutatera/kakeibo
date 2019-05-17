@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>家計簿</title>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+  <script src="/static/areaConfig.js"></script>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+
+<body>
+  <!--ナビゲーションウィンドウ-->
+  <nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
+    <div class="navbar-brand">家計簿</div>
+    <div class="navbar-nav">
+      <a class="nav-item nav-link active" href="/">推移</a>
+      <a class="nav-item nav-link" href="/future">予測</a>
+      <a class="nav-item nav-link" href="/month">月毎・年毎</a>
+    </div>
+  </nav>
+    
+  <div class="container-fluid">
+  <div class="row">
+    <!--サイドバー-->
+    <div class="col-2">
+    <div class="sidebar">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <span data-feather="settings"></span>
+        <span class="navbar-text">期間</span>
+      </li>
+      <ul class="list-unstyled ml-2">
+        <li><select name="dataLen" id="dataLen"></select></li>
+      </ul>
+      <li class="nav-item">
+        <span data-feather="align-left"></span>
+        <span class="navbar-text">項目</span>
+      </li>
+      <ul class="list-unstyled ml-2">
+        <li><input type="radio" name="radio" id="資産" value="資産" />資産</li>
+        <li><input type="radio" name="radio" id="収支" value="収支" />収支</li>
+        <li><input type="radio" name="radio" id="収入" value="収入" />収入</li>
+        <li><input type="radio" name="radio" id="収入項目" value="収入項目" />収入項目</li>
+        <li><input type="radio" name="radio" id="支出" value="支出" />支出</li>
+        <li><input type="radio" name="radio" id="支出大項目" value="支出大項目" checked="checked" />支出大項目</li>
+        <li><input type="radio" name="radio" id="支出小項目" value="支出小項目" />支出小項目</li>
+        <li><select name="sishutuList" id="sishutuList"></select>
+      </ul>
+    </ul>
+    </div>
+    </div>
+
+    <!--メイン-->
+    <main role="main" class="col-md-10">
+      <h1>推移グラフ</h1>
+      <canvas id='graph' height="40%" width="100%"></canvas>
+      <h1>推移テーブル</h1>
+      <div id="tbl"></div>
+    </main>
+  </div>
+  
+  <script>
+    // アイコンの表示
+    feather.replace()
+
+    function makeTable(slct){
+      fetch('/get_dataGraph')
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(dataGraph) {
+          $("#tbl").empty();
+          var txt = '<table class="table table-striped table-sm table-hover">'
+          txt += '<thead><tr align="right">'
+          txt += '<th>月</th>'
+          for (var c = 0; c < dataGraph["y"][slct].length; c++){
+            txt += '<th>'+ Object.keys(dataGraph["y"][slct][c])[0] + '</th>'
+          }            
+          txt += '</tr></thead>'
+          txt += '<tbody>'
+          for (var r = dataGraph["x"].length - 1; 0 <= r; r--) {
+            txt += '<tr align="right">'
+            txt += '<td>' + dataGraph["x"][r] + '</td>'
+            for (var c = 0; c < dataGraph["y"][slct].length; c++){
+              x = Object.values(dataGraph["y"][slct][c])[0][r]
+              txt += '<td>' +  String(x).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') + '</td>'
+            };
+            txt += '</tr>'
+          }
+          txt += '</tbody>'
+          txt += '</table>'
+          console.log(txt)
+          $('#tbl').append(txt)
+        })
+    }
+
+    function calcMonth(monthList, dataLen){
+      switch(dataLen){
+        case "全て": monthListTmp = monthList; break;   // 全て
+        case "半年": monthListTmp = monthList.slice(Math.max(monthList.length - 6, 0) , monthList.length); break;
+        case "1年": monthListTmp = monthList.slice(Math.max(monthList.length - 12, 0), monthList.length); break;
+        case "2年": monthListTmp = monthList.slice(Math.max(monthList.length - 24, 0), monthList.length); break;
+        case "3年": monthListTmp = monthList.slice(Math.max(monthList.length - 36, 0), monthList.length); break;
+        case "5年": monthListTmp = monthList.slice(Math.max(monthList.length - 60, 0), monthList.length); break;
+      }
+      return monthListTmp
+    }
+
+    // グラフ・テーブルの更新
+    function update(initFlag){
+      fetch('/get_dataGraph')
+        .then(function(response) {
+          return response.json();
+        })
+        .then(function(dataGraph) {
+          slct = $('input[name=radio]:checked').val()
+          sishutuNum = $("#sishutuList option:selected").val();
+          dataLen = $("#dataLen option:selected").val()
+          if(initFlag == false){
+            window.chart.destroy()
+          }
+          if(slct == "支出小項目"){
+            chart = new Chart('graph', areaConfig(calcMonth(dataGraph["x"], dataLen), [dataGraph["y"][slct][sishutuNum]]))
+          } else {
+                chart = new Chart('graph', areaConfig(calcMonth(dataGraph["x"], dataLen), dataGraph["y"][slct]))
+          }
+          makeTable(slct)
+        });
+
+    }
+
+    // selectBox(期間)のリスト設定
+    for(j of ["全て", "半年", "1年", "2年", "3年", "5年"]){
+      op = document.createElement("option")
+      op.value = j
+      op.text = j
+      document.getElementById("dataLen").appendChild(op)
+    }
+
+    // selectBox(支出小項目)のリスト設定
+    fetch('/get_dataGraph')
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(dataGraph) {
+        for(j = 0; j < dataGraph["y"]["支出小項目"].length; j++){
+          op = document.createElement("option");
+          op.value = j;
+          op.text = Object.keys(dataGraph["y"]["支出小項目"][j])[0]
+          document.getElementById("sishutuList").appendChild(op)
+        }
+      });
+
+    // 初期表示
+    update(true)
+
+    // ラジオボックスチェック時の処理
+    $('input[name="radio"]:radio').change(function(){
+      update(false)
+    });
+
+    // セレクトボックス(期間)変更時の処理
+    $("#dataLen").change(function(){
+      update(false)
+    });
+
+    // セレクトボックス(支出小項目)変更時の処理
+    $("#sishutuList").change(function(){
+      var element = document.getElementById("支出小項目");
+      element.checked = true ;
+      update(false)
+    });
+  </script>
+</body>
+</html>
