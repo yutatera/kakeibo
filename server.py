@@ -50,8 +50,8 @@ with open(args.config, "r", encoding="utf-8") as f:
 print("--reading config--")
 pprint(config)
 
-sishutuItemList = [y for x in config["支出項目"] for y in x[1]]
-sishutuCategoryList = [x[0] for x in config["支出項目"]]
+sishutuItemList = [item for _, items in config["支出項目"] for item in items]
+sishutuCategoryList = [category for category, _ in config["支出項目"] if category != "NA"]
 
 print('--reading xlsx data--')
 df_origin = pd.read_excel(args.data, sheet_name=None)
