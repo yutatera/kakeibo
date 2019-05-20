@@ -24,9 +24,9 @@
   <nav class="navbar navbar-expand navbar-dark bg-dark fixed-top">
     <div class="navbar-brand">家計簿</div>
     <div class="navbar-nav">
-      <a class="nav-item nav-link active" href="/">推移</a>
-      <a class="nav-item nav-link" href="/future">予測</a>
-      <a class="nav-item nav-link" href="/month">月毎・年毎</a>
+      <div id="index"><a class="nav-item nav-link active" href="/">推移</a></div>
+      <div id="future"><a class="nav-item nav-link" href="/future">予測</a></div>
+      <div id="month"><a class="nav-item nav-link" href="/month">月毎・年毎</a></div>
     </div>
   </nav>
     
@@ -71,6 +71,12 @@
   </div>
   
   <script>
+    url = location.href
+    if (url.indexOf('github') >= 0){
+        $("#index a").attr("href", "kakeibo/templates")
+        $("#future a").attr("href", "kakeibo/templates/future")
+        $("#month a").attr("href", "kakeibo/templates/month")
+    }
     var colors = [
         'rgb(  0,   0, 255)',
         'rgb(  0, 203, 255)',
