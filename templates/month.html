@@ -230,7 +230,7 @@
         fetch('/get_dataYear')
         .then(function(response) {
             if (url.indexOf('github') >= 0){
-                return dataYear
+                return dataYearSample
             } else {
                 return response.json();
             }
