@@ -261,9 +261,13 @@
 
     // selectBox(期間)のリスト設定
     fetch('/get_month')
-      .then(function(response) {
-        return response.json();
-      })
+    .then(function(response) {
+      if (url.indexOf('github') >= 0){
+          return monthSample
+      } else {
+          return response.json();
+      }
+    })
       .then(function(month) {
         var arr = month
         for(var j = arr.length - 1; j >= 0; j--){
@@ -275,7 +279,11 @@
       });
     // selectBox(期間)のリスト設定
     fetch('/get_year').then(function(response) {
-      return response.json();
+      if (url.indexOf('github') >= 0){
+          return yearSample
+      } else {
+          return response.json();
+      }
     }).then(function(year) {
         var arr = year
         for(var j = arr.length - 1; j >= 0; j--){
