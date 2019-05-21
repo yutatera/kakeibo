@@ -219,6 +219,11 @@ def get_month():
 def get_year():
     return json.dumps(df_year.index.tolist())
 
+#with open('get_year.json', 'w', encoding="utf-8") as f:
+#    json.dump(df_year.index.tolist(), f, ensure_ascii=False)
+#with open('get_month.json', 'w', encoding="utf-8") as f:
+#    json.dump(df_month.index.tolist(), f, ensure_ascii=False)
+
 
 @app.route('/get_dataGraph')
 def get_dataGraph():
@@ -244,8 +249,7 @@ def get_dataFuture():
 def get_monthList():
     return json.dumps(calcMonthList(config["開始月"], config["現在月"])["月"])
 
-
-@app.route('/')
+@app.route('/index')
 def index():
     return render_template('index.html')
 
