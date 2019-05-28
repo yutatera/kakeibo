@@ -21,6 +21,14 @@
 
 * 複数、口座、財布がある場合は複数のシートに記述します。
 
-## ビューア起動方法
+## 実行環境構築
+* Anacondaでpythonをインストール
+* Anaconda Promptを開き以下を実行
+  * `pip install tqdm`
+  * `pip install pandas`
+  * `pip install flask`
+  
+## ビューア実行方法
 1. doServer.batをダブルクリック
 1. shortcutをダブルクリック
+
