@@ -126,7 +126,11 @@ for month in calcMonthList(config["開始月"], config["現在月"])["月"]:
         print(df_month[("資産", "資産")][month])
         print(df_month[("資産", "資産")][monthOld])
         print(df_month[("収支", "収支")][month])
-        assert df_month[("資産", "資産")][month] - df_month[("資産", "資産")][monthOld] == df_month[("収支", "収支")][month], "error"
+        assert df_month[("資産", "資産")][month] - df_month[("資産", "資産")][monthOld] == df_month[("収支", "収支")][month], \
+              "エラー\n{}の資産は{}\n{}の資産は{}\n差額は{}\nしかし{}の収支が{}です。".format(\
+                      monthOld, df_month[("資産", "資産")][monthOld], month,  df_month[("資産", "資産")][month],\
+                      df_month[("資産", "資産")][month] - df_month[("資産", "資産")][monthOld],\
+                      month,  df_month[("収支", "収支")][month])
     monthOld = month
 print(df_month.head())
 
