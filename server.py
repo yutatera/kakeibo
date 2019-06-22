@@ -152,7 +152,7 @@ def getGraph_snapMonth(slct, my):
 @app.route('/getTable_snapMonth/<slct>/<my>')
 def getTable_snapMonth(slct, my):
     if len(my) == 6:
-       df = df_month
+        df = df_month
     elif len(my) == 4:
         df = df_year
     if slct == "in":
