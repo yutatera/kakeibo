@@ -83,8 +83,8 @@
       } else {
         return response.json();
       }
-    })
-    .then(function(month) {
+    }).then(function(month) {
+      console.log(month)
       var arr = month
       for(var j = arr.length - 1; j >= 0; j--){
         let op = document.createElement("option");
