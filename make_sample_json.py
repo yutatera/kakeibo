@@ -3,7 +3,7 @@ from server import getOut2, getMonth, getYear, getTable_index, getGraph_index,\
 import json
 out = {}
 for x in ["getOut2", "getMonth", "getYear", "getGraph_future", "getTable_future"]:
-    exec('out["{}"] = json.loads({}())'.format(x, x))
+    exec('out["/{}"] = json.loads({}())'.format(x, x))
 
 # index
 for slct in ["asset", "inout", "in", "out1"]:
