@@ -119,6 +119,7 @@
           return response.json();
         }
       }).then(function(data) {
+        console.log(data)
         $(id).empty();
         var txt = '<table class="table table-striped table-sm table-hover">'
         txt += '<thead><tr align="right">'
