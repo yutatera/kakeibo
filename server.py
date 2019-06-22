@@ -59,7 +59,7 @@ def getTable_index(item):
     out[-1].append("月")
     for column in df.columns:
         out[-1].append(column)
-    for index in df.index:
+    for index in reversed(df.index.tolist()):
         out.append([])
         out[-1].append(index)
         for column in df.columns:
@@ -132,9 +132,9 @@ def getGraph_index(item):
 @app.route('/getGraph_snapMonth/<slct>/<my>')
 def getGraph_snapMonth(slct, my):
     if len(my) == 6:
-      df = df_month
+        df = df_month
     elif len(my) == 4:
-      df = df_year
+        df = df_year
     if slct == "out":
         df = df["out1"]
     elif slct == "in":
@@ -152,15 +152,15 @@ def getGraph_snapMonth(slct, my):
 @app.route('/getTable_snapMonth/<slct>/<my>')
 def getTable_snapMonth(slct, my):
     if len(my) == 6:
-      df = df_month
+       df = df_month
     elif len(my) == 4:
-      df = df_year
+        df = df_year
     if slct == "in":
-      df = df["in"]
+        df = df["in"]
     elif slct == "out":
-      df = df["out2"]
+        df = df["out2"]
     elif slct == "inout":
-      df = df["basic"].drop(columns="資産")
+        df = df["basic"].drop(columns="資産")
     out = []
     out.append([])
     out[-1].append("項目")
@@ -181,7 +181,7 @@ def getTable_future():
     out[-1].append("月")
     out[-1].append("実績")
     out[-1].append("予測")
-    for month in df_future.index:
+    for month in reversed(df_future.index):
         out.append([])
         out[-1].append(month)
         out[-1].append("{:,}".format(int(df_future.loc[month, "実績"])))
