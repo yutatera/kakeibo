@@ -135,10 +135,14 @@ def getGraph_snapMonth(slct, my):
         df = df_month
     elif len(my) == 4:
         df = df_year
+    else:
+        df = df_month
     if slct == "out":
         df = df["out1"]
     elif slct == "in":
         df = df["in"]
+    if my == "undefined":
+        my = df.index[-1]
     con = {}
     con["type"] = "pie"
     con["options"] = {"responsive": True}
@@ -155,12 +159,16 @@ def getTable_snapMonth(slct, my):
         df = df_month
     elif len(my) == 4:
         df = df_year
+    else:
+        df = df_month
     if slct == "in":
         df = df["in"]
     elif slct == "out":
         df = df["out2"]
     elif slct == "inout":
         df = df["basic"].drop(columns="資産")
+    if my == "undefined":
+        my = df.index[-1]
     out = []
     out.append([])
     out[-1].append("項目")
