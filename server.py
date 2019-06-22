@@ -1,258 +1,219 @@
 from flask import Flask, render_template, request, redirect, url_for
 import json
-import yaml
-import os
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
-from pprint import pprint
-import argparse
+import pickle
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-config', default="sample/config.yaml")
-parser.add_argument('-data', default="sample/kakeibo.xlsx")
-args = parser.parse_args()
+with open('df_month.pkl', mode='rb') as f:
+    df_month = pickle.load(f)
+with open('df_year.pkl', mode='rb') as f:
+    df_year = pickle.load(f)
+with open('df_future.pkl', mode='rb') as f:
+    df_future = pickle.load(f)
 
-def none2int(val):
-    if val is None:
-        output = 0
-    else:
-        output = int(val)
-    return output
-
-
-def calcMonthList(startMonth, finishMonth):
-    y = startMonth[0]
-    m = startMonth[1]
-    yearList = []
-    monthList = []
-    while True:
-        if len(yearList) == 0 or yearList[-1][0] != str(np.int(np.floor((100 * y + m - 4) / 100))):
-            yearList.append([str(np.int(np.floor((100 * y + m - 4) / 100))), [str(100 * y + m)]])
-        else:
-            yearList[-1][1].append(str(100 * y + m))
-        monthList.append(str(100 * y + m))
-        if [y, m] == [finishMonth[0], finishMonth[1]]:
-            break
-        y, m = nextMonth(y, m)
-    return {"月": monthList, "年度+月": yearList}
-
-def nextMonth(y, m):
-    m = m + 1
-    if m == 13:
-        m = 1
-        y = y + 1
-    return (y, m)
-
-
-with open(args.config, "r", encoding="utf-8") as f:
-    config = yaml.load(f)
-print("--reading config--")
-pprint(config)
-
-sishutuItemList = [item for _, items in config["支出項目"] for item in items]
-sishutuCategoryList = [category for category, _ in config["支出項目"] if category != "NA"]
-
-print('--reading xlsx data--')
-df_origin = pd.read_excel(args.data, sheet_name=None)
-sheetNameList = list(df_origin.keys())
-for i, sheetName in enumerate(sheetNameList):
-    df_tmp = df_origin[sheetName]
-    # "項目チェック"
-    assert  "yyyymm" in df_tmp.columns and\
-            "分類" in df_tmp.columns and\
-            "入金" in df_tmp.columns and\
-            "出金" in df_tmp.columns and\
-            "残高" in df_tmp.columns, "error"
-    for j, x in enumerate(df_tmp["分類"].values):
-        if j == 0:
-            assert np.isnan(x), "error"
-        else:
-            assert x == "移動" or x in config["収入項目"] + sishutuItemList, "error"
-    # ---
-    df_tmp["sheet"] = sheetNameList[i]
-    if i == 0:
-        df_data = df_tmp
-    else:
-        df_data = pd.concat([df_data, df_tmp])
-
-
-df_item = pd.DataFrame([(y, x[0]) for x in config["支出項目"] for y in x[1]], columns=["分類", "大分類"])
-df_data = pd.merge(df_data, df_item, on="分類", how="left")   # 元のエクセルデータ
-# 移動のチェック
-for month in calcMonthList(config["開始月"], config["現在月"])["月"]:
-    nyukin = int(df_data.query('yyyymm==@month & 分類=="移動"')["入金"].sum())
-    shukkin = int(df_data.query('yyyymm==@month & 分類=="移動"')["出金"].sum())
-    assert nyukin == shukkin, "移動エラー"
-
-print( "--calculating--")
-columns = [("収入", "収入"), ("支出", "支出"), ("収支", "収支")]
-columns.extend([("収入項目", x) for x in config["収入項目"]])
-columns.extend([("支出小項目", x) for x in sishutuItemList])
-columns.extend([("支出大項目", x) for x in sishutuCategoryList if x != "NA"])
-columns.extend([('資産', '資産')])
-df_month = pd.DataFrame(0, index=calcMonthList(config["開始月"], config["現在月"])["月"], columns=columns)
-for sheetName in sheetNameList:
-    zandakaOld = 0
-    for month in df_month.index:
-        zan = df_data.query('yyyymm==@month and sheet==@sheetName')["残高"].values
-        if len(zan) == 0:
-            df_month.loc[month, [("資産", "資産")]] += zandakaOld
-        else:
-            df_month.loc[month, [("資産", "資産")]] += int(zan[-1])
-            zandakaOld = int(zan[-1])
-for month in tqdm(df_month.index):
-    nyukin = (df_data.query('yyyymm==@month & 分類!="移動"')["入金"].sum())
-    shukkin = (df_data.query('yyyymm==@month & 分類!="移動"')["出金"].sum())
-    df_month.loc[month, ("収入", "収入")] = none2int(nyukin)
-    df_month.loc[month, ("支出", "支出")] = none2int(shukkin)
-    df_month.loc[month, ("収支", "収支")] = none2int(nyukin) - none2int(shukkin)
-    for item in config["収入項目"]:
-        nyukin = df_data.query('分類==@item and yyyymm==@month')['入金'].sum()
-        df_month.loc[month, ("収入項目", item)] = none2int(nyukin)
-    for item in sishutuItemList:
-        shukkin = df_data.query('分類==@item and yyyymm==@month')['出金'].sum()
-        df_month.loc[month, ("支出小項目", item)] = none2int(shukkin)
-    for item in [x for x in sishutuCategoryList if x != "NA"]:
-        if item != "NA":
-            shukkin = df_data.query('大分類==@item and yyyymm==@month')["出金"].sum()
-            df_month.loc[month, ("支出大項目", item)] = none2int(shukkin)
-
-# 収支のチェック
-monthOld = None
-for month in calcMonthList(config["開始月"], config["現在月"])["月"]:
-    if monthOld != None:
-        print(month)
-        print(df_month[("資産", "資産")][month])
-        print(df_month[("資産", "資産")][monthOld])
-        print(df_month[("収支", "収支")][month])
-        assert df_month[("資産", "資産")][month] - df_month[("資産", "資産")][monthOld] == df_month[("収支", "収支")][month], \
-              "エラー\n{}の資産は{}\n{}の資産は{}\n差額は{}\nしかし{}の収支が{}です。".format(\
-                      monthOld, df_month[("資産", "資産")][monthOld], month,  df_month[("資産", "資産")][month],\
-                      df_month[("資産", "資産")][month] - df_month[("資産", "資産")][monthOld],\
-                      month,  df_month[("収支", "収支")][month])
-    monthOld = month
-print(df_month.head())
-
-# 年毎用
-yearList = calcMonthList(config["開始月"], config["現在月"])["年度+月"]
-df_year = pd.DataFrame(0, index=[year[0] for year in yearList], columns=df_month.columns)
-for col in df_year.columns:
-    for year in yearList:
-        x = 0
-        for month in year[1]:
-            x += int(df_month[col][month])
-        df_year.loc[str(year[0]), (col[0], col[1])] = x
-print(df_year.tail())
-
-# 予測
-futureMonth = config["現在月"]
-for _ in range(60):
-    futureMonth = nextMonth(futureMonth[0], futureMonth[1])
-print(futureMonth)
-index = calcMonthList(config["開始月"], [futureMonth[0], futureMonth[1]])["月"]
-df_future = pd.DataFrame(0, index=index, columns=[("予測", "実績"), ("予測", "予測")])
-shusiPredict = {}
-for month in calcMonthList(config["開始月"], config["締め月"])["月"]:
-    shusiPredict[month[4:7]] = df_month[('収支', '収支')][month]
-zandaka = df_month[('資産', '資産')]
-money_old = 0
-for month in df_future.index:
-    money = zandaka.get(month)
-    if month in calcMonthList(config["開始月"], config["締め月"])["月"]:
-        df_future.loc[month, ("予測", "実績")] = money
-        df_future.loc[month, ("予測", "予測")] = 0
-    else:
-        money = money_old + shusiPredict[month[4:7]]
-        df_future.loc[month, ("予測", "実績")] = 0
-        df_future.loc[month, ("予測", "予測")] = money
-    money_old = money
-df_future.astype(int)
-print(df_future.tail())
-
-# 推移グラフ用
-dataGraph = {}
-dataGraph["x"] = df_month.index.tolist()
-dataGraph["y"] = {}
-for column in df_month.columns:
-    if not column[0] in dataGraph["y"].keys():
-        dataGraph["y"][column[0]] = []
-    dataGraph["y"][column[0]].append({column[1]: df_month[column].tolist()})
-
-# 月毎用
-dataMonth = {}
-for month in df_month.index:
-    if not month in dataMonth.keys():
-        dataMonth[month] = {}
-    for column in df_month.columns:
-        if not column[0] in dataMonth[month].keys():
-            dataMonth[month][column[0]] = {}
-        dataMonth[month][column[0]][column[1]] = int(df_month[column][month])
-dataMonthAverage = []
-for column in df_month.columns:
-    if column[0] == "支出小項目":
-        dataMonthAverage.append([column[1], int(df_month[column][calcMonthList(config["開始月"], config["締め月"])["月"]].mean())])
-
-dataYear = {}
-for year in df_year.index:
-    if not year in dataYear.keys():
-        dataYear[year] = {}
-    for column in df_year.columns:
-        if not column[0] in dataYear[year].keys():
-            dataYear[year][column[0]] = {}
-        dataYear[year][column[0]][column[1]] = int(df_year[column][year])
-
-
-dataFuture = {}
-dataFuture["x"] = df_future.index.tolist()
-dataFuture["y"] = {}  #"収入":{}, "収入項目":{}, "支出小項目":{}, "支出大項目":{}}
-for column in df_future.columns:
-    if not column[0] in dataFuture["y"].keys():
-        dataFuture["y"][column[0]] = []
-    dataFuture["y"][column[0]].append({column[1]: df_future[column].tolist()})
-
-
+colors = [
+    ['rgb(  0,   0, 255)', 'rgba(  0,   0, 255, 0.5)'],
+    ['rgb(  0, 203, 255)', 'rgba(  0, 203, 255, 0.5)'],
+    ['rgb(255, 255,   0)', 'rgba(255, 255,   0, 0.5)'],
+    ['rgb(216, 255, 204)', 'rgba(216, 255, 204, 0.5)'],
+    ['rgb(  0, 255,   0)', 'rgba(  0, 255,   0, 0.5)'],
+    ['rgb(  0, 101,   0)', 'rgba(  0, 101,   0, 0.5)'],
+    ['rgb(255,  63,   0)', 'rgba(255,  63,   0, 0.5)'],
+    ['rgb( 203,  0, 203)', 'rgba( 203,  0, 203, 0.5)'],
+    ['rgb(  0,   0,  50)', 'rgba(  0,   0,  50, 0.5)']
+]
 
 app = Flask(__name__)
 
-@app.route('/get_month')
-def get_month():
-    return json.dumps(df_month.index.tolist())
+#########
+# 共通用 #
+#########
+@app.route('/getOut2')
+def getOut2():
+    return json.dumps(df_month["out2"].columns.tolist(), ensure_ascii=False)
+@app.route('/getMonth')
+def getMonth():
+    return json.dumps(df_month["basic"].index.tolist(), ensure_ascii=False)
+@app.route('/getYear')
+def getYear():
+    return json.dumps(df_year["basic"].index.tolist(), ensure_ascii=False)
 
-@app.route('/get_year')
-def get_year():
-    return json.dumps(df_year.index.tolist())
+################
+# index.html用 #
+################
+@app.route('/getTable_index/<item>')
+def getTable_index(item):
+    slct, out2Num = item.split(",")
+    if slct == "asset":
+        df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
+    elif slct == "inout":
+        df = df_month["basic"].drop(columns="資産")
+    elif slct == "out1":
+        df = df_month["out1"]
+    elif slct == "out2":
+        df = df_month["out2"].loc[:, [df_month["out2"].columns[int(out2Num)]]]
+    elif slct == "in":
+        df = df_month["in"]
+    out = []
+    out.append([])
+    out[-1].append("月")
+    for column in df.columns:
+        out[-1].append(column)
+    for index in df.index:
+        out.append([])
+        out[-1].append(index)
+        for column in df.columns:
+            out[-1].append("{:,}".format(df.loc[index, column]))
+    return json.dumps(out, ensure_ascii=False)
 
-#with open('get_year.json', 'w', encoding="utf-8") as f:
-#    json.dump(df_year.index.tolist(), f, ensure_ascii=False)
-#with open('get_month.json', 'w', encoding="utf-8") as f:
-#    json.dump(df_month.index.tolist(), f, ensure_ascii=False)
+@app.route('/getGraph_index/<item>')
+def getGraph_index(item):
+    slct, out2Num, dataLen = item.split(",")
+    if slct == "inout":
+        df = df_month["basic"].drop(columns="資産")
+        if int(dataLen) == 0:
+            df = df.loc[df.index[:24], :]
+        chartData = {}
+        chartData["labels"] = df.index.tolist()
+        chartData["datasets"] = []
+        for i, column in enumerate(df.columns):
+            chartData["datasets"].append({})
+            if i == 2:
+                chartData["datasets"][-1]["type"] = "bar"
+                chartData["datasets"][-1]["backgroundColor"] = colors[i % len(colors)][0]
+            else:
+                chartData["datasets"][-1]["type"] = "line"
+                chartData["datasets"][-1]["fill"] = False
+                chartData["datasets"][-1]["borderColor"] = colors[i % len(colors)][0]
+            chartData["datasets"][-1]["label"] = column
+            chartData["datasets"][-1]["data"] = df.loc[:, column].tolist()
+        out = {}
+        out["type"] = "bar"
+        out["data"] = chartData
+        out["options"] = {"responsive": True, "tooltips": {"mode": "index", "intersect": True},
+                          "elements": {"line": {"tension": 0.1}},
+                          "scales"  : {"yAxes": [{"ticks": {"beginAtZero": True}}]}
+                         }
+    else:
+        if slct == "out1":
+            df = df_month["out1"]
+        elif slct == "out2":
+            df = df_month["out2"].loc[:, [df_month["out2"].columns[int(out2Num)]]]
+        elif slct == "in":
+            df = df_month["in"]
+        elif slct == "asset":
+            df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
+        if int(dataLen) == 0:
+            df = df.loc[df.index[:24], :]
+        out = {}
+        out["type"] = "line"
+        out["options"] = {"elements": {"line": {"tension": 0.1}},
+                          "scales"  : {"yAxes":[{"stacked": True, "ticks": {"beginAtZero": True}}]},
+                          "legend": {"display": True}
+                         }
+        out["data"] = {}
+        out["data"]["labels"] = df.index.tolist()
+        out["data"]["datasets"] = []
+        for i, column in enumerate(df.columns):
+            out["data"]["datasets"].append({})
+            if i == 0:
+                out["data"]["datasets"][-1]["fill"] = True
+            else:
+                out["data"]["datasets"][-1]["fill"] = "-1"
+            out["data"]["datasets"][-1]["backgroundColor"] = colors[i % len(colors)][1]
+            out["data"]["datasets"][-1]["borderColor"] = colors[i % len(colors)][0]
+            out["data"]["datasets"][-1]["label"] = column
+            out["data"]["datasets"][-1]["data"] = df.loc[:, column].tolist()
+    return json.dumps(out, ensure_ascii=False)
 
+################
+# month.html用 #
+################
+@app.route('/getGraph_snapMonth/<slct>/<my>')
+def getGraph_snapMonth(slct, my):
+    if len(my) == 6:
+      df = df_month
+    elif len(my) == 4:
+      df = df_year
+    if slct == "out":
+        df = df["out1"]
+    elif slct == "in":
+        df = df["in"]
+    con = {}
+    con["type"] = "pie"
+    con["options"] = {"responsive": True}
+    con["data"] = {}
+    con["data"]["datasets"] = [{}]
+    con["data"]["datasets"][0]["data"] = df.loc[my, :].values.tolist()
+    con["data"]["datasets"][0]["backgroundColor"] = [colors[i % len(colors)][0] for i in range(len(df.columns))]
+    con["data"]["labels"] = df.columns.tolist()
+    return json.dumps(con, ensure_ascii=False)
 
-@app.route('/get_dataGraph')
-def get_dataGraph():
-    return json.dumps(dataGraph)
+@app.route('/getTable_snapMonth/<slct>/<my>')
+def getTable_snapMonth(slct, my):
+    if len(my) == 6:
+      df = df_month
+    elif len(my) == 4:
+      df = df_year
+    if slct == "in":
+      df = df["in"]
+    elif slct == "out":
+      df = df["out2"]
+    elif slct == "inout":
+      df = df["basic"].drop(columns="資産")
+    out = []
+    out.append([])
+    out[-1].append("項目")
+    out[-1].append("費用")
+    for col in df.columns:
+        out.append([])
+        out[-1].append(col)
+        out[-1].append("{:,}".format(int(df.loc[my, col])))
+    return json.dumps(out, ensure_ascii=False)
 
-@app.route('/get_dataMonth')
-def get_dataMonth():
-    return json.dumps(dataMonth)
+#################
+# future.html用 #
+#################
+@app.route('/getTable_future')
+def getTable_future():
+    out = []
+    out.append([])
+    out[-1].append("月")
+    out[-1].append("実績")
+    out[-1].append("予測")
+    for month in df_future.index:
+        out.append([])
+        out[-1].append(month)
+        out[-1].append("{:,}".format(int(df_future.loc[month, "実績"])))
+        out[-1].append("{:,}".format(int(df_future.loc[month, "予測"])))
+    return json.dumps(out, ensure_ascii=False)
 
-@app.route('/get_dataMonth_ave')
-def get_dataMonth_ave():
-    return json.dumps([dataMonth, dataMonthAverage])
+@app.route('/getGraph_future')
+def getGraph_future():
+    out = {}
+    out["type"] = "line"
+    out["options"] = {"elements": {"line": {"tension": 0.1}},
+                      "scales"  : {"yAxes":[{"stacked": True, "ticks": {"beginAtZero": True}}]},
+                      "legend": {"display": True}
+                      }
+    out["data"] = {}
+    out["data"]["labels"] = df_future.index.tolist()
+    out["data"]["datasets"] = []
+    for i, column in enumerate(df_future.columns):
+        out["data"]["datasets"].append({})
+        if i == 0:
+            out["data"]["datasets"][-1]["fill"] = True
+        else:
+            out["data"]["datasets"][-1]["fill"] = "-1"
+        out["data"]["datasets"][-1]["backgroundColor"] = colors[i % len(colors)][1]
+        out["data"]["datasets"][-1]["borderColor"] = colors[i % len(colors)][0]
+        out["data"]["datasets"][-1]["label"] = column
+        out["data"]["datasets"][-1]["data"] = df_future.loc[:, column].tolist()
+    return json.dumps(out, ensure_ascii=False)
 
-@app.route('/get_dataYear')
-def get_dataYear():
-    return json.dumps(dataYear)
-
-@app.route('/get_dataFuture')
-def get_dataFuture():
-    return json.dumps(dataFuture)
-
-@app.route('/get_monthList')
-def get_monthList():
-    return json.dumps(calcMonthList(config["開始月"], config["現在月"])["月"])
-
+#####################
+# render_template用 #
+#####################
 @app.route('/index')
 def index():
     return render_template('index.html')
