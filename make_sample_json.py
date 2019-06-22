@@ -28,7 +28,7 @@ for out2Num in range(len(df_month["out2"].columns.tolist())):
 
 # month
 outMonth= {}
-for month in df_month["basic"].index.tolist() + df_year["basic"].index.tolist():
+for month in df_month["basic"].index.tolist() + df_year["basic"].index.tolist() + ["undefined"]:
     for slct in ["in", "out"]:
         exec('outMonth["/getGraph_snapMonth/{}/{}"] = json.loads(getGraph_snapMonth("{}", "{}"))'.format(slct, month, slct, month))
     for slct in ["in", "out", "inout"]:
