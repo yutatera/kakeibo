@@ -72,7 +72,7 @@ def getGraph_index(item):
     if slct == "inout":
         df = df_month["basic"].drop(columns="資産")
         if int(dataLen) == 0:
-            df = df.loc[df.index[:24], :]
+            df = df.loc[df.index[-24:], :]
         chartData = {}
         chartData["labels"] = df.index.tolist()
         chartData["datasets"] = []
