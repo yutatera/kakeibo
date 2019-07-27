@@ -104,7 +104,7 @@ def getGraph_index(item):
         elif slct == "asset":
             df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
         if int(dataLen) == 0:
-            df = df.loc[df.index[:24], :]
+            df = df.loc[df.index[-24:], :]
         out = {}
         out["type"] = "line"
         out["options"] = {"elements": {"line": {"tension": 0.1}},
