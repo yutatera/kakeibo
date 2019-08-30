@@ -91,7 +91,7 @@ def getGraph_index(item):
         out["type"] = "bar"
         out["data"] = chartData
         out["options"] = {"responsive": True, "tooltips": {"mode": "index", "intersect": True},
-                          "elements": {"line": {"tension": 0.1}},
+                          "elements": {"line": {"tension": 0.0001}},
                           "scales"  : {"yAxes": [{"ticks": {"beginAtZero": True}}]}
                          }
     else:
@@ -107,7 +107,7 @@ def getGraph_index(item):
             df = df.loc[df.index[-24:], :]
         out = {}
         out["type"] = "line"
-        out["options"] = {"elements": {"line": {"tension": 0.1}},
+        out["options"] = {"elements": {"line": {"tension": 0.0001}},
                           "scales"  : {"yAxes":[{"stacked": True, "ticks": {"beginAtZero": True}}]},
                           "legend": {"display": True}
                          }
@@ -200,7 +200,7 @@ def getTable_future():
 def getGraph_future():
     out = {}
     out["type"] = "line"
-    out["options"] = {"elements": {"line": {"tension": 0.1}},
+    out["options"] = {"elements": {"line": {"tension": 0.0001}},
                       "scales"  : {"yAxes":[{"stacked": True, "ticks": {"beginAtZero": True}}]},
                       "legend": {"display": True}
                       }
