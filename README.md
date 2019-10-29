@@ -17,13 +17,13 @@
 | `/month` | `month.html`の表示 | 
 | `/getOut2` |  |
 | `/getMonth` | |
-| `/getYear | |
-| `/getTable_index/<item> | |
-| `/getGraph_index/<item> | |
-| `/getGraph_snapMonth/<slct>/<my> | |
-| `/getTable_snapMonth/<slct>/<my> | |
-| `/getTable_future | |
-| `/getGraph_future | |
+| `/getYear` | |
+| `/getTable_index/<item>` | |
+| `/getGraph_index/<item>` | |
+| `/getGraph_snapMonth/<slct>/<my>` | |
+| `/getTable_snapMonth/<slct>/<my>` | |
+| `/getTable_future` | |
+| `/getGraph_future` | |
 
 
 ## 入力
