@@ -1,6 +1,30 @@
 # 家計簿ビューア
 ## 概要
-* エクセルで作成した家計簿を[こちら](https://yutatera.github.io/kakeibo/templates/)のように見ることができます。
+* エクセルで作成した家計簿を[サンプルページ](https://yutatera.github.io/kakeibo/templates/)のように見ることができます。
+* サンプルページは、GitHub Pagesで公開しています。
+  * 参考：[Qittaページ](https://qiita.com/tonkotsuboy_com/items/f98667b89228b98bc096)
+
+## ソースコード
+* calc.py
+  * エクセルデータ、設定ファイルからpklデータを作成
+* server.py
+  * pklデータを元に、各種APIを提供
+
+| URL | 機能 |
+| --- | --- |
+| `/index` | `index.html`の表示 | 
+| `/future` | `future.html`の表示 | 
+| `/month` | `month.html`の表示 | 
+| `/getOut2` |  |
+| `/getMonth` | |
+| `/getYear | |
+| `/getTable_index/<item> | |
+| `/getGraph_index/<item> | |
+| `/getGraph_snapMonth/<slct>/<my> | |
+| `/getTable_snapMonth/<slct>/<my> | |
+| `/getTable_future | |
+| `/getGraph_future | |
+
 
 ## 入力
 #### エクセルで作成した家計簿
