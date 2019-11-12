@@ -14,7 +14,7 @@
   * APIの一覧は下表
   * APIへのアクセス結果は`curl`コマンドで確かめることができる。
     * `curl http://localhost:5000/getMonth`
-    * `curl -no_proxy localhost http://localhost:5000/getMonth`
+    * `curl --noproxy localhost http://localhost:5000/index`
 
 | URL | 機能 |
 | --- | --- |
