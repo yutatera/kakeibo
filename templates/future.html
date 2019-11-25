@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22/vue.min.js'></script>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
   <style type="text/css">
     .sidebar {
@@ -40,7 +41,18 @@
     <main role="main" class="col-md-7">
     <h1>予測</h1>
     <canvas id="graph" height="50%" width="100%"></canvas>
-    <div id="tbl"></div>
+    <div id="tbl">
+      <table class="table table-striped table-sm table-hover">
+        <thead><tr align="right">
+          <th v-for = "col in columns">[[col]]</th>
+        </tr></thead>
+        <tbody>
+          <tr align="right" v-for = "line in values">
+            <td v-for = "dt in line">[[dt]]</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     </main>
   </div>
   </div>
@@ -55,25 +67,11 @@
         return response.json();
       }
     }).then(function(data) {
-      $("#tbl").empty();
-      var txt = '<table class="table table-striped table-sm table-hover">'
-      txt += '<thead><tr align="right">'
-      for (var c = 0; c < data[0].length; c++){
-        txt += '<th>' + data[0][c] + '</th>'
-      }
-      txt += '</tr></thead>'
-      txt += '<tbody>'
-      for (var r = 1; r <= data.length - 1; r++) {
-        txt += '<tr align="right">'
-        txt += '<td>' + data[r][0] + '</td>'
-        for (var c = 1; c < data[0].length; c++){
-          txt += '<td>' + data[r][c] + '</td>'
-        };
-        txt += '</tr>'
-      }
-      txt += '</tbody>'
-      txt += '</table>'
-      $('#tbl').append(txt)
+      new Vue({
+        el: '#tbl',
+        data: {"columns": data[0], "values": data.slice(1)},
+        delimiters: ['[[', ']]']
+      });
     })
     fetch('/getGraph_future').then(function(response) {
       if (url.indexOf('github') >= 0){
