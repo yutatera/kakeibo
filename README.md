@@ -14,7 +14,7 @@
   * APIの一覧は下表
   * APIへのアクセス結果は`curl`コマンドで確かめることができる。
     * `curl http://localhost:5000/getMonth`
-    * `curl --no_proxy localhost http://localhost:5000/getMonth`
+    * `curl --noproxy localhost http://localhost:5000/getMonth`
 
 | URL | 機能 |
 | --- | --- |
@@ -61,5 +61,6 @@
 * サンプルは[こちら](https://github.com/yutatera/kakeibo/blob/master/sample/config.yaml)。
   
 ## ビューア実行方法
-1. doServer.batをダブルクリック
+1. `python calc.py`
+1. `python server.py`
 1. ブラウザの窓に`http://localhost:5000/index`と打ち込み実行
