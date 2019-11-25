@@ -68,6 +68,8 @@ def main(args):
                 assert np.isnan(x), "{}シートの１行目のデータには残高のみ記載してください".format(sheetName)
             else:
                 assert x == "移動" or x in config["収入項目"] + out2List, "{}シートの{}行目のデータの分類「{}」が不適切です".format(sheetName, j, x)
+        for j, x in enumerate(df_tmp["yyyymm"].values):
+            assert not np.isnan(x), "{}シートの{}行目のデータのyyyymmが入力されていません。".format(sheetName, j)
         df_tmp["sheet"] = sheetNameList[i]
         if i == 0:
             df_data = df_tmp
