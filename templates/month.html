@@ -7,8 +7,6 @@
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
   <script src="https://unpkg.com/vue-chartjs/dist/vue-chartjs.min.js"></script>
-  
-
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22/vue.min.js'></script>
@@ -100,81 +98,67 @@
     url = location.href
     feather.replace() // アイコンの表示
 
-    // common variable
+    // global variable
     var config = {radio: "月", select_month: "", select_year: ""}
     
     // mixins
     var updateMixin = {
       methods: {
-        tbl_update: function(radio, select_month, select_year) {
+        update_tbl: function(radio, select_month, select_year) {
           if(radio=="月"){
             select = select_month
           } else {
             select = select_year
           }
-          fetch('/getTable_snapMonth/inout/' + select).then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData['/getTable_snapMonth/inout/' + my]
-            } else {
+          if (url.indexOf('github') >= 0){
+            tbl_inout.set(sampleData['/getTable_snapMonth/inout/' + select])
+            tbl_in.set(sampleData['/getTable_snapMonth/in/' + select])
+            tbl_out.set(sampleData['/getTable_snapMonth/out/' + select])
+          } else {
+            fetch('/getTable_snapMonth/inout/' + select).then(function(response) {
               return response.json();
-            }
-          }).then(function(data) {
-            tbl_inout.set(data)
-          })
-          fetch('/getTable_snapMonth/in/' + select).then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData['/getTable_snapMonth/in/' + my]
-            } else {
+            }).then(function(data) {
+              tbl_inout.set(data)
+            })
+            fetch('/getTable_snapMonth/in/' + select).then(function(response) {
               return response.json();
-            }
-          }).then(function(data) {
-            tbl_in.set(data)
-          })
-          fetch('/getTable_snapMonth/out/' + select).then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData['/getTable_snapMonth/out/' + my]
-            } else {
+            }).then(function(data) {
+              tbl_in.set(data)
+            })
+            fetch('/getTable_snapMonth/out/' + select).then(function(response) {
               return response.json();
-            }
-          }).then(function(data) {
-            tbl_out.set(data)
-          })
+            }).then(function(data) {
+              tbl_out.set(data)
+            })
+          }
         },
-        graphUpdate: function(radio, select_month, select_year){
-          console.log(radio, select_month, select_year)
-          initFlag = true
-          if(initFlag == false){
-            window.myPie1.destroy()
-            window.myPie2.destroy()
+        update_graph: function(radio, select_month, select_year){
+          if(radio=="月"){
+            select = select_month
+          } else {
+            select = select_year
           }
-          slct = $('input[name=radio]:checked').val()
-          if(slct == "月"){
-            my = $("#month option:selected").val()
-          }else{
-            my = $("#year option:selected").val()
-          }
-          // 収入グラフ
-          fetch('/getGraph_snapMonth/in/' + my).then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData['/getGraph_snapMonth/in/' + my]
-            } else {
-              return response.json();
-            }
-          }).then(function(config) {
+          window.myPie1.destroy()
+          window.myPie2.destroy()
+          if (url.indexOf('github') >= 0){
             var ctx = document.getElementById('in').getContext('2d');
-            window.myPie1 = new Chart(ctx, config);
-          })
-          // 支出グラフ
-          fetch('/getGraph_snapMonth/out/' + my).then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData['/getGraph_snapMonth/out/' + my]
-            } else {
-              return response.json();
-            }
-          }).then(function(config) {
+            window.myPie1 = new Chart(ctx, sampleData['/getGraph_snapMonth/in/' + select])
             var ctx = document.getElementById('out').getContext('2d');
-            window.myPie2 = new Chart(ctx, config);
-          })
+            window.myPie2 = new Chart(ctx, sampleData['/getGraph_snapMonth/out/' + select])
+          } else {
+            // 収入グラフ
+            fetch('/getGraph_snapMonth/in/' + select).then(function(response) {
+              return response.json();
+            }).then(function(config) {
+              window.myPie1 = new Chart(document.getElementById('in').getContext('2d'), config);
+            })
+            // 支出グラフ
+            fetch('/getGraph_snapMonth/out/' + select).then(function(response) {
+              return response.json();
+            }).then(function(config) {
+              window.myPie2 = new Chart(document.getElementById('out').getContext('2d'), config);
+            })
+          }
         }
       }
     }
@@ -191,7 +175,8 @@
             <td v-for = "dt in line">[[dt]]</td>
           </tr>
         </tbody>
-        </table>`
+        </table>`,
+      methods: {set: function(data) {this.data = data}}
     }
     var selectMixin = {
       methods: {
@@ -214,8 +199,8 @@
       mixins: [updateMixin, allMixin],
       methods: {
         handler: function (event) {
-          this.tbl_update(this.config.radio, this.config.select_month, this.config.select_year)
-          this.graphUpdate(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_tbl(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_graph(this.config.radio, this.config.select_month, this.config.select_year)
         }
       }
     });
@@ -225,8 +210,8 @@
         mixins: [updateMixin, allMixin],
         methods: {
           handler: function (event) {
-            this.tbl_update(this.config.radio, this.config.select_month, this.config.select_year)
-            this.graphUpdate(this.config.radio, this.config.select_month, this.config.select_year)
+            this.update_tbl(this.config.radio, this.config.select_month, this.config.select_year)
+            this.update_graph(this.config.radio, this.config.select_month, this.config.select_year)
           }
         }
     });
@@ -243,8 +228,8 @@
         handler: function (event) {
           this.config.select_year = event.target.value
           this.config.radio = "年"
-          this.tbl_update(this.config.radio, this.config.select_month, this.config.select_year)
-          this.graphUpdate(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_tbl(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_graph(this.config.radio, this.config.select_month, this.config.select_year)
         }
       }
     });
@@ -259,8 +244,8 @@
         handler: function (event) {
           this.config.select_month = event.target.value
           this.config.radio = "月"
-          this.tbl_update(this.config.radio, this.config.select_month, this.config.select_year)
-          this.graphUpdate(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_tbl(this.config.radio, this.config.select_month, this.config.select_year)
+          this.update_graph(this.config.radio, this.config.select_month, this.config.select_year)
         }
       }
     });
@@ -269,21 +254,21 @@
     var tbl_inout = new Vue({
         el: '#tbl_inout',
         data: {data: [[]]},
-        mixins: [tblMixin, allMixin],
-        methods: { set: function(data) {this.data = data}}
+        mixins: [tblMixin, allMixin]
     })
     var tbl_in = new Vue({
         el: '#tbl_in',
         data: {data: [[]]},
-        mixins: [tblMixin, allMixin],
-        methods: { set: function(data) {this.data = data}}
+        mixins: [tblMixin, allMixin]
     })
     var tbl_out = new Vue({
         el: '#tbl_out',
         data: {data: [[]]},
-        mixins: [tblMixin, allMixin],
-        methods: { set: function(data) {this.data = data}}
+        mixins: [tblMixin, allMixin]
     })
+
+
+    // 初期設定
 
     // selectBox(期間)のリスト設定
     fetch('/getMonth').then(function(response) {
@@ -304,8 +289,12 @@
     }).then(function(data) {
       select_year.setOptions(data)
     })
-    
-    // テーブルの更新
+    // graphの描画
+    var ctx = document.getElementById('in').getContext('2d');
+    window.myPie1 = new Chart(ctx, []);
+    var ctx = document.getElementById('out').getContext('2d');
+    window.myPie2 = new Chart(ctx, []);
+
     sampleData = {"/getGraph_snapMonth/in/200104": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [559860, 119796], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200104": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [33771, 19764, 130839, 17259, 83461, 19250, 12950, 106084, 36658], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200104": [["項目", "費用"], ["給与A", "559,860"], ["給与B", "119,796"]], "/getTable_snapMonth/out/200104": [["項目", "費用"], ["電気", "13,813"], ["ガス", "13,799"], ["水道", "6,159"], ["通信", "19,764"], ["住居", "130,839"], ["保険", "11,155"], ["医療", "6,104"], ["食料品", "83,461"], ["日用雑貨", "19,250"], ["交通", "12,950"], ["娯楽", "106,084"], ["交際", "36,658"], ["その他", "16,283"]], "/getTable_snapMonth/inout/200104": [["項目", "費用"], ["収入", "679,656"], ["支出", "476,319"], ["収支", "203,337"]], "/getGraph_snapMonth/in/200105": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [518426, 190230], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200105": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [47109, 10241, 167071, 31643, 73135, 12613, 19977, 245336, 86518], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200105": [["項目", "費用"], ["給与A", "518,426"], ["給与B", "190,230"]], "/getTable_snapMonth/out/200105": [["項目", "費用"], ["電気", "17,180"], ["ガス", "12,593"], ["水道", "17,336"], ["通信", "10,241"], ["住居", "167,071"], ["保険", "16,792"], ["医療", "14,851"], ["食料品", "73,135"], ["日用雑貨", "12,613"], ["交通", "19,977"], ["娯楽", "245,336"], ["交際", "86,518"], ["その他", "10,213"]], "/getTable_snapMonth/inout/200105": [["項目", "費用"], ["収入", "708,656"], ["支出", "703,856"], ["収支", "4,800"]], "/getGraph_snapMonth/in/200106": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [582373, 187612], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200106": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [28554, 9278, 169518, 33997, 67624, 17147, 11323, 402174, 82337], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200106": [["項目", "費用"], ["給与A", "582,373"], ["給与B", "187,612"]], "/getTable_snapMonth/out/200106": [["項目", "費用"], ["電気", "6,350"], ["ガス", "12,307"], ["水道", "9,897"], ["通信", "9,278"], ["住居", "169,518"], ["保険", "19,414"], ["医療", "14,583"], ["食料品", "67,624"], ["日用雑貨", "17,147"], ["交通", "11,323"], ["娯楽", "402,174"], ["交際", "82,337"], ["その他", "16,873"]], "/getTable_snapMonth/inout/200106": [["項目", "費用"], ["収入", "769,985"], ["支出", "838,825"], ["収支", "-68,840"]], "/getGraph_snapMonth/in/200107": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [511095, 188721], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200107": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [40455, 5252, 187080, 37499, 62065, 18509, 12085, 278341, 61022], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200107": [["項目", "費用"], ["給与A", "511,095"], ["給与B", "188,721"]], "/getTable_snapMonth/out/200107": [["項目", "費用"], ["電気", "14,177"], ["ガス", "18,528"], ["水道", "7,750"], ["通信", "5,252"], ["住居", "187,080"], ["保険", "19,296"], ["医療", "18,203"], ["食料品", "62,065"], ["日用雑貨", "18,509"], ["交通", "12,085"], ["娯楽", "278,341"], ["交際", "61,022"], ["その他", "13,654"]], "/getTable_snapMonth/inout/200107": [["項目", "費用"], ["収入", "699,816"], ["支出", "715,962"], ["収支", "-16,146"]], "/getGraph_snapMonth/in/200108": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [597550, 129578], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200108": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [47686, 14106, 154382, 34157, 81656, 19640, 19635, 271976, 88874], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200108": [["項目", "費用"], ["給与A", "597,550"], ["給与B", "129,578"]], "/getTable_snapMonth/out/200108": [["項目", "費用"], ["電気", "15,732"], ["ガス", "13,840"], ["水道", "18,114"], ["通信", "14,106"], ["住居", "154,382"], ["保険", "17,058"], ["医療", "17,099"], ["食料品", "81,656"], ["日用雑貨", "19,640"], ["交通", "19,635"], ["娯楽", "271,976"], ["交際", "88,874"], ["その他", "15,851"]], "/getTable_snapMonth/inout/200108": [["項目", "費用"], ["収入", "727,128"], ["支出", "747,963"], ["収支", "-20,835"]], "/getGraph_snapMonth/in/200109": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [561622, 146314], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200109": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [53195, 11476, 124217, 27768, 67232, 17121, 13025, 112366, 90368], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200109": [["項目", "費用"], ["給与A", "561,622"], ["給与B", "146,314"]], "/getTable_snapMonth/out/200109": [["項目", "費用"], ["電気", "18,821"], ["ガス", "18,846"], ["水道", "15,528"], ["通信", "11,476"], ["住居", "124,217"], ["保険", "13,896"], ["医療", "13,872"], ["食料品", "67,232"], ["日用雑貨", "17,121"], ["交通", "13,025"], ["娯楽", "112,366"], ["交際", "90,368"], ["その他", "17,729"]], "/getTable_snapMonth/inout/200109": [["項目", "費用"], ["収入", "707,936"], ["支出", "534,497"], ["収支", "173,439"]], "/getGraph_snapMonth/in/200110": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [533019, 130578], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200110": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [47677, 8287, 155166, 20680, 85205, 10880, 18299, 158297, 69856], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200110": [["項目", "費用"], ["給与A", "533,019"], ["給与B", "130,578"]], "/getTable_snapMonth/out/200110": [["項目", "費用"], ["電気", "15,785"], ["ガス", "14,887"], ["水道", "17,005"], ["通信", "8,287"], ["住居", "155,166"], ["保険", "13,094"], ["医療", "7,586"], ["食料品", "85,205"], ["日用雑貨", "10,880"], ["交通", "18,299"], ["娯楽", "158,297"], ["交際", "69,856"], ["その他", "16,626"]], "/getTable_snapMonth/inout/200110": [["項目", "費用"], ["収入", "663,597"], ["支出", "590,973"], ["収支", "72,624"]], "/getGraph_snapMonth/in/200111": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [550631, 105406], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200111": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [27387, 12190, 190290, 25408, 50393, 19116, 16551, 200355, 100431], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200111": [["項目", "費用"], ["給与A", "550,631"], ["給与B", "105,406"]], "/getTable_snapMonth/out/200111": [["項目", "費用"], ["電気", "13,102"], ["ガス", "8,477"], ["水道", "5,808"], ["通信", "12,190"], ["住居", "190,290"], ["保険", "10,389"], ["医療", "15,019"], ["食料品", "50,393"], ["日用雑貨", "19,116"], ["交通", "16,551"], ["娯楽", "200,355"], ["交際", "100,431"], ["その他", "19,477"]], "/getTable_snapMonth/inout/200111": [["項目", "費用"], ["収入", "656,037"], ["支出", "661,598"], ["収支", "-5,561"]], "/getGraph_snapMonth/in/200112": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [507976, 103895], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200112": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [45616, 5950, 132681, 26894, 57925, 11988, 11868, 49108, 42443], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200112": [["項目", "費用"], ["給与A", "507,976"], ["給与B", "103,895"]], "/getTable_snapMonth/out/200112": [["項目", "費用"], ["電気", "15,881"], ["ガス", "18,013"], ["水道", "11,722"], ["通信", "5,950"], ["住居", "132,681"], ["保険", "13,511"], ["医療", "13,383"], ["食料品", "57,925"], ["日用雑貨", "11,988"], ["交通", "11,868"], ["娯楽", "49,108"], ["交際", "42,443"], ["その他", "11,439"]], "/getTable_snapMonth/inout/200112": [["項目", "費用"], ["収入", "611,871"], ["支出", "395,912"], ["収支", "215,959"]], "/getGraph_snapMonth/in/200201": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [597658, 189711], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200201": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [53900, 8088, 100526, 33578, 77249, 18999, 11475, 209903, 73373], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200201": [["項目", "費用"], ["給与A", "597,658"], ["給与B", "189,711"]], "/getTable_snapMonth/out/200201": [["項目", "費用"], ["電気", "19,009"], ["ガス", "16,361"], ["水道", "18,530"], ["通信", "8,088"], ["住居", "100,526"], ["保険", "15,727"], ["医療", "17,851"], ["食料品", "77,249"], ["日用雑貨", "18,999"], ["交通", "11,475"], ["娯楽", "209,903"], ["交際", "73,373"], ["その他", "18,346"]], "/getTable_snapMonth/inout/200201": [["項目", "費用"], ["収入", "787,369"], ["支出", "605,437"], ["収支", "181,932"]], "/getGraph_snapMonth/in/200202": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [503374, 138070], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200202": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [49549, 12547, 148800, 32547, 50581, 16880, 16829, 379089, 75178], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200202": [["項目", "費用"], ["給与A", "503,374"], ["給与B", "138,070"]], "/getTable_snapMonth/out/200202": [["項目", "費用"], ["電気", "17,957"], ["ガス", "17,018"], ["水道", "14,574"], ["通信", "12,547"], ["住居", "148,800"], ["保険", "17,026"], ["医療", "15,521"], ["食料品", "50,581"], ["日用雑貨", "16,880"], ["交通", "16,829"], ["娯楽", "379,089"], ["交際", "75,178"], ["その他", "11,529"]], "/getTable_snapMonth/inout/200202": [["項目", "費用"], ["収入", "641,444"], ["支出", "793,529"], ["収支", "-152,085"]], "/getGraph_snapMonth/in/200203": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [556825, 186934], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/200203": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [35926, 17442, 187732, 35607, 55858, 14569, 13797, 151324, 44615], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/200203": [["項目", "費用"], ["給与A", "556,825"], ["給与B", "186,934"]], "/getTable_snapMonth/out/200203": [["項目", "費用"], ["電気", "4,647"], ["ガス", "12,480"], ["水道", "18,799"], ["通信", "17,442"], ["住居", "187,732"], ["保険", "18,682"], ["医療", "16,925"], ["食料品", "55,858"], ["日用雑貨", "14,569"], ["交通", "13,797"], ["娯楽", "151,324"], ["交際", "44,615"], ["その他", "16,232"]], "/getTable_snapMonth/inout/200203": [["項目", "費用"], ["収入", "743,759"], ["支出", "573,102"], ["収支", "170,657"]], "/getGraph_snapMonth/in/2001": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [6580409, 1816845], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/2001": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [510825, 134621, 1848302, 357037, 812384, 196712, 177814, 2564353, 851673], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/2001": [["項目", "費用"], ["給与A", "6,580,409"], ["給与B", "1,816,845"]], "/getTable_snapMonth/out/2001": [["項目", "費用"], ["電気", "172,454"], ["ガス", "177,149"], ["水道", "161,222"], ["通信", "134,621"], ["住居", "1,848,302"], ["保険", "186,040"], ["医療", "170,997"], ["食料品", "812,384"], ["日用雑貨", "196,712"], ["交通", "177,814"], ["娯楽", "2,564,353"], ["交際", "851,673"], ["その他", "184,252"]], "/getTable_snapMonth/inout/2001": [["項目", "費用"], ["収入", "8,397,254"], ["支出", "7,637,973"], ["収支", "759,281"]], "/getGraph_snapMonth/in/undefined": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [556825, 186934], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)"]}], "labels": ["給与A", "給与B"]}}, "/getGraph_snapMonth/out/undefined": {"type": "pie", "options": {"responsive": true}, "data": {"datasets": [{"data": [35926, 17442, 187732, 35607, 55858, 14569, 13797, 151324, 44615], "backgroundColor": ["rgb(  0,   0, 255)", "rgb(  0, 203, 255)", "rgb(255, 255,   0)", "rgb(216, 255, 204)", "rgb(  0, 255,   0)", "rgb(  0, 101,   0)", "rgb(255,  63,   0)", "rgb( 203,  0, 203)", "rgb(  0,   0,  50)"]}], "labels": ["光熱水", "通信", "住居", "医療・保険", "食料品", "日用雑貨", "交通", "娯楽", "交際"]}}, "/getTable_snapMonth/in/undefined": [["項目", "費用"], ["給与A", "556,825"], ["給与B", "186,934"]], "/getTable_snapMonth/out/undefined": [["項目", "費用"], ["電気", "4,647"], ["ガス", "12,480"], ["水道", "18,799"], ["通信", "17,442"], ["住居", "187,732"], ["保険", "18,682"], ["医療", "16,925"], ["食料品", "55,858"], ["日用雑貨", "14,569"], ["交通", "13,797"], ["娯楽", "151,324"], ["交際", "44,615"], ["その他", "16,232"]], "/getTable_snapMonth/inout/undefined": [["項目", "費用"], ["収入", "743,759"], ["支出", "573,102"], ["収支", "170,657"]], "/getMonth": ["200104", "200105", "200106", "200107", "200108", "200109", "200110", "200111", "200112", "200201", "200202", "200203"], "/getYear": ["2001"]}
 
   </script>
