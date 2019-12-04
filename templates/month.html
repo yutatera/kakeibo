@@ -4,10 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>家計簿</title>
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
-  <script src="https://unpkg.com/vue-chartjs/dist/vue-chartjs.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.22/vue.min.js'></script>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
@@ -18,6 +15,24 @@
       position: sticky;
     }
     body { padding-top: 70px; }
+    #content{
+      z-index:2;
+      width:50%;
+      padding: 1em;
+      background:#fff;
+    }
+    #overlay{
+      z-index:1;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background-color:rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 
@@ -90,11 +105,20 @@
       <h1>支出</h1>
       <canvas id="out" height="30%" width="100%"></canvas>
       <div id="tbl_out"></div>
+
+      <div id="modal">
+        <div id="overlay" v-show="showContent" v-on:click="closeModal">
+          <div id="content">
+            <p>期間を選択して下さい</p>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   </div>
 
   <script>
+
     url = location.href
     feather.replace() // アイコンの表示
 
@@ -110,26 +134,30 @@
           } else {
             select = select_year
           }
-          if (url.indexOf('github') >= 0){
-            tbl_inout.set(sampleData['/getTable_snapMonth/inout/' + select])
-            tbl_in.set(sampleData['/getTable_snapMonth/in/' + select])
-            tbl_out.set(sampleData['/getTable_snapMonth/out/' + select])
-          } else {
-            fetch('/getTable_snapMonth/inout/' + select).then(function(response) {
-              return response.json();
-            }).then(function(data) {
-              tbl_inout.set(data)
-            })
-            fetch('/getTable_snapMonth/in/' + select).then(function(response) {
-              return response.json();
-            }).then(function(data) {
-              tbl_in.set(data)
-            })
-            fetch('/getTable_snapMonth/out/' + select).then(function(response) {
-              return response.json();
-            }).then(function(data) {
-              tbl_out.set(data)
-            })
+          if(select == ""){
+            modal.openModal()
+          }else{
+            if (url.indexOf('github') >= 0){
+              tbl_inout.set(sampleData['/getTable_snapMonth/inout/' + select])
+              tbl_in.set(sampleData['/getTable_snapMonth/in/' + select])
+              tbl_out.set(sampleData['/getTable_snapMonth/out/' + select])
+            } else {
+              fetch('/getTable_snapMonth/inout/' + select).then(function(response) {
+                return response.json();
+              }).then(function(data) {
+                tbl_inout.set(data)
+              })
+              fetch('/getTable_snapMonth/in/' + select).then(function(response) {
+                return response.json();
+              }).then(function(data) {
+                tbl_in.set(data)
+              })
+              fetch('/getTable_snapMonth/out/' + select).then(function(response) {
+                return response.json();
+              }).then(function(data) {
+                tbl_out.set(data)
+              })
+            }
           }
         },
         update_graph: function(radio, select_month, select_year){
@@ -138,26 +166,28 @@
           } else {
             select = select_year
           }
-          window.myPie1.destroy()
-          window.myPie2.destroy()
-          if (url.indexOf('github') >= 0){
-            var ctx = document.getElementById('in').getContext('2d');
-            window.myPie1 = new Chart(ctx, sampleData['/getGraph_snapMonth/in/' + select])
-            var ctx = document.getElementById('out').getContext('2d');
-            window.myPie2 = new Chart(ctx, sampleData['/getGraph_snapMonth/out/' + select])
-          } else {
-            // 収入グラフ
-            fetch('/getGraph_snapMonth/in/' + select).then(function(response) {
-              return response.json();
-            }).then(function(config) {
-              window.myPie1 = new Chart(document.getElementById('in').getContext('2d'), config);
-            })
-            // 支出グラフ
-            fetch('/getGraph_snapMonth/out/' + select).then(function(response) {
-              return response.json();
-            }).then(function(config) {
-              window.myPie2 = new Chart(document.getElementById('out').getContext('2d'), config);
-            })
+          if(select != ""){
+            window.myPie1.destroy()
+            window.myPie2.destroy()
+            if (url.indexOf('github') >= 0){
+              var ctx = document.getElementById('in').getContext('2d');
+              window.myPie1 = new Chart(ctx, sampleData['/getGraph_snapMonth/in/' + select])
+              var ctx = document.getElementById('out').getContext('2d');
+              window.myPie2 = new Chart(ctx, sampleData['/getGraph_snapMonth/out/' + select])
+            } else {
+              // 収入グラフ
+              fetch('/getGraph_snapMonth/in/' + select).then(function(response) {
+                return response.json();
+              }).then(function(config) {
+                window.myPie1 = new Chart(document.getElementById('in').getContext('2d'), config);
+              })
+              // 支出グラフ
+              fetch('/getGraph_snapMonth/out/' + select).then(function(response) {
+                return response.json();
+              }).then(function(config) {
+                window.myPie2 = new Chart(document.getElementById('out').getContext('2d'), config);
+              })
+            }
           }
         }
       }
@@ -191,6 +221,22 @@
     var allMixin = {
       delimiters: ['[[', ']]']
     }
+
+    // modal window
+    var modal = new Vue({
+      el: '#modal',
+      data: {
+        showContent: false
+      },
+      methods:{
+        openModal: function(){
+          this.showContent = true
+        },
+        closeModal: function(){
+          this.showContent = false
+        }
+      }
+    })
 
     // radio
     var radio_year = new Vue({
