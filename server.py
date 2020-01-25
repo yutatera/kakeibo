@@ -172,7 +172,7 @@ def getTable_snapMonth(slct, my):
     out = []
     out.append([])
     out[-1].append("項目")
-    out[-1].append("費用")
+    out[-1].append("金額")
     for col in df.columns:
         out.append([])
         out[-1].append(col)
