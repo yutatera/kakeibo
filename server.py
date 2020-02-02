@@ -71,7 +71,7 @@ def getGraph_index(item):
     slct, out2Num, dataLen = item.split(",")
     if slct == "inout":
         df = df_month["basic"].drop(columns="資産")
-        if int(dataLen) == 0:
+        if int(dataLen) == 1:
             df = df.loc[df.index[-24:], :]
         chartData = {}
         chartData["labels"] = df.index.tolist()
@@ -103,7 +103,7 @@ def getGraph_index(item):
             df = df_month["in"]
         elif slct == "asset":
             df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
-        if int(dataLen) == 0:
+        if int(dataLen) == 1:
             df = df.loc[df.index[-24:], :]
         out = {}
         out["type"] = "line"
