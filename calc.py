@@ -109,9 +109,13 @@ def main(args):
         for item in config["収入項目"]:
             nyukin = df_data.query('分類==@item and yyyymm==@month')['入金'].sum()
             df_month["in"].loc[month, item] = none2int(nyukin)
+            assert df_data.query('分類==@item and yyyymm==@month')['出金'].sum() == 0.0, \
+                   "エラー\n{}の{}について入金項目にもかかわらず出金の列に記入されています。".format(month, item)
         for item in out2List:
             shukkin = df_data.query('分類==@item and yyyymm==@month')['出金'].sum()
             df_month["out2"].loc[month, item] = none2int(shukkin)
+            assert df_data.query('分類==@item and yyyymm==@month')['入金'].sum() == 0.0, \
+                   "エラー\n{}の{}について出金項目にもかかわらず入金の列に記入されています。".format(month, item)
         for item in [x for x in out1List if x != "NA"]:
             if item != "NA":
                 shukkin = df_data.query('大分類==@item and yyyymm==@month')["出金"].sum()
