@@ -1,6 +1,6 @@
 # 家計簿ビューア
 ## 概要
-* エクセルで作成した家計簿を[サンプルページ](https://yutatera.github.io/kakeibo/templates/)のように見ることができます。
+* エクセルで作成した家計簿を[サンプルページ](https://yutera12.github.io/kakeibo/templates/)のように見ることができます。
 * サンプルページは、GitHub Pagesで公開しています。
   * 参考：[Qittaページ](https://qiita.com/tonkotsuboy_com/items/f98667b89228b98bc096)
 
@@ -54,11 +54,11 @@
 |...|...|...|...|...|...|...|
 
 * 複数、口座、財布がある場合は複数のシートに記述する。
-* サンプルは[こちら](https://github.com/yutatera/kakeibo/blob/master/sample/kakeibo.xlsx)。
+* サンプルは[こちら](https://github.com/yutera12/kakeibo/blob/master/sample/kakeibo.xlsx)。
 
 #### 設定ファイル
 * ビューアで表示する期間や、収入、支出の項目をyaml形式で記載する。
-* サンプルは[こちら](https://github.com/yutatera/kakeibo/blob/master/sample/config.yaml)。
+* サンプルは[こちら](https://github.com/yutera12/kakeibo/blob/master/sample/config.yaml)。
   
 ## ビューア実行方法
 1. `python calc.py`
