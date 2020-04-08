@@ -225,26 +225,14 @@
       },
       delimiters: ['[[', ']]'],
       methods: {
-        init: function(){
-          fetch('/getOut2').then(function(response) {
-            if (url.indexOf('github') >= 0){
-              return sampleData["/getOut2"]
-            } else {
-              return response.json();
-            }
-          }).then(function(data) {
-            this.out2Len = data.length
-          });
-          
-        },
         update: function(){
           // グラフの作成
-          updateGraph('/getGraph_index/' + ap.selectedUnit + "/asset,None", 'canvas_asset')
-          updateGraph('/getGraph_index/' + ap.selectedUnit + "/inout,None", 'canvas_inout')
-          updateGraph('/getGraph_index/' + ap.selectedUnit + "/in,None", 'canvas_in')
-          updateGraph('/getGraph_index/' + ap.selectedUnit + "/out1,None", 'canvas_out1')
+          updateGraph('/getGraph_index/' + this.selectedUnit + "/asset,None", 'canvas_asset')
+          updateGraph('/getGraph_index/' + this.selectedUnit + "/inout,None", 'canvas_inout')
+          updateGraph('/getGraph_index/' + this.selectedUnit + "/in,None", 'canvas_in')
+          updateGraph('/getGraph_index/' + this.selectedUnit + "/out1,None", 'canvas_out1')
           for(var i=0; i<this.out2Len; i++) {
-            updateGraph('/getGraph_index/' + ap.selectedUnit + "/out2," + String(i), 'canvas_out2_' + String(i))
+            updateGraph('/getGraph_index/' + this.selectedUnit + "/out2," + String(i), 'canvas_out2_' + String(i))
           }
           if (this.selectedOption == 'グラフ＆テーブル'){
             // テーブルの作成
@@ -298,8 +286,16 @@
         ap[canvas] = x
       })
     }
-    ap.init()
-    ap.update()
+    fetch('/getOut2').then(function(response) {
+      if (url.indexOf('github') >= 0){
+        return sampleData["/getOut2"]
+      } else {
+        return response.json();
+      }
+    }).then(function(data) {
+      ap.out2Len = data.length
+      ap.update()
+    })
 
     // アイコンの表示
     feather.replace()
