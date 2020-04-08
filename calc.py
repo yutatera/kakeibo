@@ -140,7 +140,10 @@ def main(args):
             for year in yearList:
                 x = 0
                 for month in year[1]:
-                    x += int(df_month[key][col][month])
+                    if col == '資産':
+                        x = int(df_month[key][col][month])
+                    else:
+                        x += int(df_month[key][col][month])
                 df_year[key].loc[str(year[0]), col] = x
 
     # 予測
