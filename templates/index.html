@@ -96,46 +96,67 @@
       <tbl v-bind:data="tbl_out1"></tbl>
 
       <a id="link_out2" class="anchor"><h1>支出小項目</h1></a>
+      <h3>[[out2_0]]</h3>
       <canvas id="canvas_out2_0" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_0"></tbl>
+      <h3>[[out2_1]]</h3>
       <canvas id="canvas_out2_1" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_1"></tbl>
+      <h3>[[out2_2]]</h3>
       <canvas id="canvas_out2_2" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_2"></tbl>
+      <h3>[[out2_3]]</h3>
       <canvas id="canvas_out2_3" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_3"></tbl>
+      <h3>[[out2_4]]</h3>
       <canvas id="canvas_out2_4" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_4"></tbl>
+      <h3>[[out2_5]]</h3>
       <canvas id="canvas_out2_5" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_5"></tbl>
+      <h3>[[out2_6]]</h3>
       <canvas id="canvas_out2_6" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_6"></tbl>
+      <h3>[[out2_7]]</h3>
       <canvas id="canvas_out2_7" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_7"></tbl>
+      <h3>[[out2_8]]</h3>
       <canvas id="canvas_out2_8" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_8"></tbl>
+      <h3>[[out2_9]]</h3>
       <canvas id="canvas_out2_9" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_9"></tbl>
+      <h3>[[out2_10]]</h3>
       <canvas id="canvas_out2_10" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_10"></tbl>
+      <h3>[[out2_11]]</h3>
       <canvas id="canvas_out2_11" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_11"></tbl>
+      <h3>[[out2_12]]</h3>
       <canvas id="canvas_out2_12" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_12"></tbl>
+      <h3>[[out2_13]]</h3>
       <canvas id="canvas_out2_13" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_13"></tbl>
+      <h3>[[out2_14]]</h3>
       <canvas id="canvas_out2_14" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_14"></tbl>
+      <h3>[[out2_15]]</h3>
       <canvas id="canvas_out2_15" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_15"></tbl>
+      <h3>[[out2_16]]</h3>
       <canvas id="canvas_out2_16" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_16"></tbl>
+      <h3>[[out2_17]]</h3>
       <canvas id="canvas_out2_17" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_17"></tbl>
+      <h3>[[out2_18]]</h3>
       <canvas id="canvas_out2_18" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_18"></tbl>
+      <h3>[[out2_19]]</h3>
       <canvas id="canvas_out2_19" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_19"></tbl>
+      <h3>[[out2_20]]</h3>
       <canvas id="canvas_out2_20" height="30%" width="100%"></canvas>
       <tbl v-bind:data="tbl_out2_20"></tbl>
     </main>
@@ -176,6 +197,27 @@
         tbl_inout: [[]],
         tbl_in: [[]],
         tbl_out1: [[]],
+        out2_0: 'a',
+        out2_1: '',
+        out2_2: '',
+        out2_3: '',
+        out2_4: '',
+        out2_5: '',
+        out2_6: '',
+        out2_7: '',
+        out2_8: '',
+        out2_9: '',
+        out2_10: '',
+        out2_11: '',
+        out2_12: '',
+        out2_13: '',
+        out2_14: '',
+        out2_15: '',
+        out2_16: '',
+        out2_17: '',
+        out2_18: '',
+        out2_19: '',
+        out2_20: '',
         tbl_out2_0: [[]],
         tbl_out2_1: [[]],
         tbl_out2_2: [[]],
@@ -286,6 +328,7 @@
         ap[canvas] = x
       })
     }
+
     fetch('/getOut2').then(function(response) {
       if (url.indexOf('github') >= 0){
         return sampleData["/getOut2"]
@@ -294,6 +337,9 @@
       }
     }).then(function(data) {
       ap.out2Len = data.length
+      for(var i=0; i<data.length; i++) {
+        ap['out2_' + String(i)] = data[i]
+      }
       ap.update()
     })
 
