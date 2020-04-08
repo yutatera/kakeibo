@@ -148,7 +148,9 @@ def getGraph_snapMonth(slct, my):
     con["options"] = {"responsive": True}
     con["data"] = {}
     con["data"]["datasets"] = [{}]
-    con["data"]["datasets"][0]["data"] = df.loc[my, :].values.tolist()
+    tmp = df.copy().loc[my, :].values
+    tmp[tmp < 0] = 0
+    con["data"]["datasets"][0]["data"] = tmp.tolist()
     con["data"]["datasets"][0]["backgroundColor"] = [colors[i % len(colors)][0] for i in range(len(df.columns))]
     con["data"]["labels"] = df.columns.tolist()
     return json.dumps(con, ensure_ascii=False)
