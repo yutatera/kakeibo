@@ -41,22 +41,28 @@ def getYear():
 ################
 # index.html用 #
 ################
-@app.route('/getTable_index/<item>')
-def getTable_index(item):
+@app.route('/getTable_index/<my>/<item>/')
+def getTable_index(my, item):
     slct, out2Num = item.split(",")
+    if my == 'year':
+        df = df_year.copy()
+        col = '年度'
+    elif my == 'month':
+        df = df_month.copy()
+        col = '月'
     if slct == "asset":
-        df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
+        df = df["basic"].drop(columns=["収入", "支出", "収支"])
     elif slct == "inout":
-        df = df_month["basic"].drop(columns="資産")
+        df = df["basic"].drop(columns="資産")
     elif slct == "out1":
-        df = df_month["out1"]
+        df = df["out1"]
     elif slct == "out2":
-        df = df_month["out2"].loc[:, [df_month["out2"].columns[int(out2Num)]]]
+        df = df["out2"].loc[:, [df["out2"].columns[int(out2Num)]]]
     elif slct == "in":
-        df = df_month["in"]
+        df = df["in"]
     out = []
     out.append([])
-    out[-1].append("月")
+    out[-1].append(col)
     for column in df.columns:
         out[-1].append(column)
     for index in reversed(df.index.tolist()):
@@ -66,13 +72,15 @@ def getTable_index(item):
             out[-1].append("{:,}".format(df.loc[index, column]))
     return json.dumps(out, ensure_ascii=False)
 
-@app.route('/getGraph_index/<item>')
-def getGraph_index(item):
-    slct, out2Num, dataLen = item.split(",")
+@app.route('/getGraph_index/<my>/<item>/')
+def getGraph_index(my, item):
+    slct, out2Num = item.split(",")
+    if my == 'year':
+        df = df_year.copy()
+    elif my == 'month':
+        df = df_month.copy()
     if slct == "inout":
-        df = df_month["basic"].drop(columns="資産")
-        if int(dataLen) == 1:
-            df = df.loc[df.index[-24:], :]
+        df = df["basic"].drop(columns="資産")
         chartData = {}
         chartData["labels"] = df.index.tolist()
         chartData["datasets"] = []
@@ -96,15 +104,13 @@ def getGraph_index(item):
                          }
     else:
         if slct == "out1":
-            df = df_month["out1"]
+            df = df["out1"]
         elif slct == "out2":
-            df = df_month["out2"].loc[:, [df_month["out2"].columns[int(out2Num)]]]
+            df = df["out2"].loc[:, [df["out2"].columns[int(out2Num)]]]
         elif slct == "in":
-            df = df_month["in"]
+            df = df["in"]
         elif slct == "asset":
-            df = df_month["basic"].drop(columns=["収入", "支出", "収支"])
-        if int(dataLen) == 1:
-            df = df.loc[df.index[-24:], :]
+            df = df["basic"].drop(columns=["収入", "支出", "収支"])
         out = {}
         out["type"] = "line"
         out["options"] = {"elements": {"line": {"tension": 0.0001}},
