@@ -63,7 +63,7 @@
       </ul>
       <li>
         <span data-feather="align-left"></span>
-        <span class="navbar-text">リンク</span>
+        <span class="navbar-text">各項目へ移動</span>
       </li>
       <ul class="list-unstyled ml-2">
         <li><a href="#link_asset">資産</a></li>
@@ -171,6 +171,7 @@
         selectedOption : 'グラフのみ',
         units: [{id: 'year', name:'年度'}, {id: 'month', name:'月'}],
         selectedUnit : 'month',
+        out2Len: 0,
         tbl_asset: [[]],
         tbl_inout: [[]],
         tbl_in: [[]],
@@ -224,24 +225,38 @@
       },
       delimiters: ['[[', ']]'],
       methods: {
+        init: function(){
+          fetch('/getOut2').then(function(response) {
+            if (url.indexOf('github') >= 0){
+              return sampleData["/getOut2"]
+            } else {
+              return response.json();
+            }
+          }).then(function(data) {
+            this.out2Len = data.length
+          });
+          
+        },
         update: function(){
+          // グラフの作成
           updateGraph('/getGraph_index/' + ap.selectedUnit + "/asset,None", 'canvas_asset')
           updateGraph('/getGraph_index/' + ap.selectedUnit + "/inout,None", 'canvas_inout')
           updateGraph('/getGraph_index/' + ap.selectedUnit + "/in,None", 'canvas_in')
           updateGraph('/getGraph_index/' + ap.selectedUnit + "/out1,None", 'canvas_out1')
-          for(var i=0; i<21; i++) {
+          for(var i=0; i<this.out2Len; i++) {
             updateGraph('/getGraph_index/' + ap.selectedUnit + "/out2," + String(i), 'canvas_out2_' + String(i))
           }
           if (this.selectedOption == 'グラフ＆テーブル'){
+            // テーブルの作成
             updateTbl('/getTable_index/' + this.selectedUnit + '/asset,None', 'tbl_asset')
             updateTbl('/getTable_index/' + this.selectedUnit + '/inout,None', 'tbl_inout')
             updateTbl('/getTable_index/' + this.selectedUnit + '/in,None', 'tbl_in')
             updateTbl('/getTable_index/' + this.selectedUnit + '/out1,None', 'tbl_out1')
-            for(var i=0; i<21; i++) {
+            for(var i=0; i<this.out2Len; i++) {
               updateTbl('/getTable_index/' + this.selectedUnit + '/out2,' + String(i),'tbl_out2_' + String(i))
             }
           } else {
-            // 消す
+            // テーブルの削除
             this['tbl_asset'] = [[]]
             this['tbl_inout'] = [[]]
             this['tbl_in'] = [[]]
@@ -283,7 +298,7 @@
         ap[canvas] = x
       })
     }
-
+    ap.init()
     ap.update()
 
     // アイコンの表示
