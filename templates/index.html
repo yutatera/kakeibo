@@ -168,9 +168,10 @@
 　<script>
     url = location.href
 
-    Vue.component('tbl', {
+    const tblComponent = {
       props: ['data'],
-      template: `<table class="table table-striped table-sm table-hover">
+      template: `
+        <table class="table table-striped table-sm table-hover">
           <thead>
             <tr align="right">
               <th v-for = "col in data[0]">[[col]]</th>
@@ -183,7 +184,7 @@
           </tbody>
         </table>`,
       delimiters: ['[[', ']]']
-    })
+    };
     ap = new Vue({
       el: '#main',
       data:{
@@ -264,6 +265,7 @@
         canvas_out2_19: '',
         canvas_out2_20: '',
       },
+      components: {"tbl": tblComponent},
       delimiters: ['[[', ']]'],
       methods: {
         update: function(){
