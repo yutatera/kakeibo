@@ -133,21 +133,17 @@
           <div v-for="(name, index) in names">
             <h3>[[name]]</h3>
             <canvas v-bind:id="'canvas_out2_' + index" height="30%" width="100%"></canvas>
-            <tbl v-bind:data="extract(option, tbls, index)"> </tbl>
+            <tbl v-bind:data="extract(tbls, index)"> </tbl>
           </div>
         </div>
       `,
-      props: ["option", "names", "tbls"],
+      props: ["names", "tbls"],
       methods: {
-        extract: function(option, list, index){
-          if (option==='グラフのみ'){
+        extract: function(list, index){
+          if (list.length <= index){
             return [[]]
-          } else {
-            if (list.length <= index){
-              return [[]]
-            }else{
-              return list[index]
-            }
+          }else{
+            return list[index]
           }
         }
       },
@@ -169,7 +165,6 @@
         tbl_out1: [[]],
         out2_name: [],
         out2_tbl: [],
-        out2_canvas: [],
         canvas_asset: '',
         canvas_inout: '',
         canvas_in: '',
@@ -193,7 +188,7 @@
             updateTbl('/getTable_index/' + this.selectedUnit + '/inout,None', 'tbl_inout')
             updateTbl('/getTable_index/' + this.selectedUnit + '/in,None', 'tbl_in')
             updateTbl('/getTable_index/' + this.selectedUnit + '/out1,None', 'tbl_out1')
-            ap['out2_tbl'] = []
+            this['out2_tbl'] = []
             for(var i=0; i<this.out2Len; i++) {
               path = '/getTable_index/' + this.selectedUnit + '/out2,' + String(i)
               fetch(path).then(function(response) {
@@ -212,6 +207,7 @@
             this['tbl_inout'] = [[]]
             this['tbl_in'] = [[]]
             this['tbl_out1'] = [[]]
+            this['out2_tbl'] = []
           }
         }
       }
